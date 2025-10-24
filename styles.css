@@ -1,0 +1,31 @@
+:root{
+  --bg1:#5b6ee1; --bg2:#8a5fe6; --bg3:#40c0b5;
+  --card:#ffffffcc; --text:#0f172a; --muted:#475569; --ring:rgba(139,92,246,.45);
+}
+*{box-sizing:border-box} html,body{height:100%}
+body{margin:0;font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial;color:#fff;
+     background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));
+     background-attachment:fixed;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.wrap{width:100%;max-width:960px}
+.lead{margin:0 0 20px;opacity:.92}
+.panel{background:rgba(255,255,255,.1);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.25);
+       border-radius:24px;padding:18px; box-shadow:0 10px 30px rgba(0,0,0,.2)}
+.row{display:flex;gap:12px;flex-wrap:wrap}
+input[type=text]{flex:1;min-width:220px;border-radius:14px;padding:14px 16px;border:1px solid #e2e8f0;outline:none;
+  font-size:16px;color:var(--text);background:#fff;transition:box-shadow .2s ease}
+input[type=text]:focus{box-shadow:0 0 0 6px var(--ring)}
+.primary{border:0;border-radius:14px;padding:14px 18px;background:#0f172a;color:#fff;font-weight:600;cursor:pointer}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.chip{border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:#fff;padding:8px 12px;border-radius:999px;
+      font-size:14px;cursor:pointer}
+.chip.active,.chip:hover{background:#ffffffcc;color:#111827}
+.titleRow{display:flex;align-items:baseline;gap:8px;margin-top:16px}
+h2{margin:0;font-size: clamp(22px,3.2vw,28px)}
+.tag{font-size:13px;opacity:.9}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(1,minmax(0,1fr))}
+@media (min-width:720px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.card{background:var(--card);border-radius:18px;padding:16px;color:var(--text);box-shadow:0 8px 24px rgba(0,0,0,.12)}
+.card h3{margin:0 0 8px;font-size:18px}
+.card p{margin:0;color:var(--muted);line-height:1.55}
+.card ul{margin:6px 0 0 18px;color:var(--muted)}
+.note{opacity:.85;font-size:13px;margin-top:6px}
