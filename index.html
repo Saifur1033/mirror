@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Psych Word Mirror – Enhanced (BN)</title>
+<style>
+  :root{
+    --bg1:#5b6ee1; --bg2:#8a5fe6; --bg3:#40c0b5;
+    --card:#ffffffcc; --text:#0f172a; --muted:#475569; --ring:rgba(139,92,246,.45);
+  }
+  .contrast{
+    --bg1:#111827; --bg2:#111827; --bg3:#111827;
+    --card:#ffffff; --text:#0b0f1a; --muted:#1f2937; --ring:rgba(17,24,39,.4);
+  }
+  body{margin:0;font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial;color:#fff;
+       background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));background-attachment:fixed;
+       min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;transition:background .3s ease}
+  .wrap{width:100%;max-width:960px}
+  .panel{background:rgba(255,255,255,.1);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.25);
+         border-radius:20px;padding:16px}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  input{flex:1;min-width:220px;border-radius:12px;padding:12px 14px;border:1px solid #e2e8f0;background:#fff;color:var(--text)}
+  button{border:0;border-radius:12px;padding:12px 14px;background:#0f172a;color:#fff;font-weight:600;cursor:pointer}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .chip{padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.15);cursor:pointer;color:#fff}
+  .chip.active,.chip:hover{background:#ffffffcc;color:#111827}
+  .grid{display:grid;gap:12px;margin-top:14px;grid-template-columns:repeat(1,minmax(0,1fr))}
+  @media(min-width:720px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  .card{background:var(--card);color:var(--text);border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.12)}
+  h1{margin:0 0 6px}
+  h2{margin:14px 0 6px}
+  footer{opacity:.85;font-size:13px;margin-top:6px;color:#fff}
+  .toolbar{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:10px;color:#fff}
+  .seg{display:inline-flex;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:999px;overflow:hidden}
+  .seg button{background:transparent;border:0;color:#fff;padding:8px 12px}
+  .seg button.active{background:#ffffffcc;color:#111827}
+  .ghost{background:rgba(255,255,255,.15)}
+  .muted{opacity:.92}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="toolbar">
+    <div class="seg" role="tablist" aria-label="Language">
+      <button id="lang-en" class="active" aria-selected="true">English</button>
+      <button id="lang-bn" aria-selected="false">বাংলা</button>
+    </div>
+    <div class="seg" role="tablist" aria-label="Theme">
+      <button id="theme-calm" class="active" aria-selected="true">Calm</button>
+      <button id="theme-contrast" aria-selected="false">High Contrast</button>
+    </div>
+  </div>
+
+  <h1 id="title-app">Psych Word Mirror</h1>
+  <p class="muted" id="subtitle-app">Type a word and hit <b>Decode</b> (or press Enter). Or tap a chip.</p>
+
+  <section class="panel">
+    <div class="row">
+      <input id="w" type="text" placeholder="e.g., positive" aria-label="word">
+      <button id="b">Decode</button>
+      <button id="share" class="ghost">Share/Copy</button>
+    </div>
+    <div class="chips" id="chips"></div>
+    <div id="out">
+      <h2 id="title-word">Positive</h2><span id="tag">recognized</span>
+      <div class="grid" id="cards"></div>
+      <footer id="note">Note: Snapshot reflection tool, not a diagnosis.</footer>
+    </div>
+  </section>
+</div>
+<script>
+(function(){
+  const UI = {
+    en: {appTitle:"Psych Word Mirror",appSub:"Type a word and hit Decode (or press Enter). Or tap a chip.",decode:"Decode",share:"Share/Copy",recognized:"recognized",generic:"not in library — generic lens",note:"Note: Snapshot reflection tool, not a diagnosis."},
+    bn: {appTitle:"Psych Word Mirror",appSub:"একটি শব্দ লিখে ‘Decode’ চাপুন (বা Enter)। নিচের চিপ থেকেও বাছাই করতে পারেন।",decode:"ডিকোড",share:"শেয়ার/কপি",recognized:"স্বীকৃত",generic:"লাইব্রেরিতে নেই — সাধারণ ব্যাখ্যা",note:"নোট: এটি স্ব-মূল্যায়নের জন্য হালকা টুল; এটি কোনো চিকিৎসাগত নির্ণয় নয়।"}
+  };
+
+  const EXAMPLES=["positive","peaceful","powerful","resilient","creative","confident","mindful","intuitive","strong","appreciative","passionate","content","soulful","flowing","home","abundant","progressive","bun"];
+
+  const HEAD = {
+    en: { core:"Core Interpretation", psych:"Psychology Angle", phase:"What It Reflects Right Now", forward:"Forward Insight" },
+    bn: { core:"কোর ব্যাখ্যা", psych:"মনোবিজ্ঞান দৃষ্টিকোণ", phase:"এই মুহূর্তে যা বোঝায়", forward:"আগামীতে করণীয়" }
+  };
+
+  const LIB_EN = {
+    positive:[
+      {t:HEAD.en.core, b:"Your mind is tuned toward hope and growth. You look for what can be built, not what’s broken."},
+      {t:HEAD.en.psych, l:["Cognitive reframing — you convert setbacks into learning.","Healthy optimism bias — solutions over problems.","Internal locus of control — you believe your actions matter."]},
+      {t:HEAD.en.phase, l:["You’re rebuilding or transforming something with calm leadership.","Less reactive, more intentional — quiet power."]},
+      {t:HEAD.en.forward, b:"Stay hopeful but honest: process the pain, then choose where your energy goes."}
+    ],
+    bun:[
+      {t:HEAD.en.core, b:"You’re craving comfort, warmth, and simple joys — the fresh‑baked feeling of being cared for."},
+      {t:HEAD.en.psych, l:["Attachment and soothing systems are active — seeking safety and sweetness.","Sensory nostalgia; food/texture memories are guiding attention.","Self‑nurture signals: replenish before you push."]},
+      {t:HEAD.en.phase, l:["Slowing down, home routines, and gentle social energy."]},
+      {t:HEAD.en.forward, b:"Build small rituals — tea, prayer, journaling, early nights. Comfort fuels courage."}
+    ]
+  };
+
+  const LIB_BN = {
+    positive:[
+      {t:HEAD.bn.core, b:"আপনার মন আশা ও উন্নতির দিকে টিউনড। ভাঙা নয়, কীভাবে গড়া যায়—সেদিকে নজর।"},
+      {t:HEAD.bn.psych, l:["কগনিটিভ রিফ্রেমিং — বাধাকে শেখায় বদলান।","সুস্থ আশাবাদ — সমস্যার চেয়ে সমাধানকে প্রাধান্য।","ইন্টারনাল লোকাস অব কন্ট্রোল — নিজের কাজের শক্তিতে বিশ্বাস।"]},
+      {t:HEAD.bn.phase, l:["শান্ত নেতৃত্বে আপনি কিছু রিবিল্ড/ট্রান্সফর্ম করছেন।","কম রিঅ্যাকটিভ, বেশি ইন্টেনশনাল — নীরব শক্তি।"]},
+      {t:HEAD.bn.forward, b:"আশাবাদী থাকুন, তবে সৎও থাকুন—ব্যথা প্রক্রিয়াজাত করুন, তারপর শক্তি কোথায় দেবেন ঠিক করুন।"}
+    ],
+    bun:[
+      {t:HEAD.bn.core, b:"আপনি আরাম, উষ্ণতা আর ছোট‑ছোট আনন্দের খোঁজ করছেন — যেন সদ্য বেক করা রুটির মতো যত্নের অনুভূতি।"},
+      {t:HEAD.bn.psych, l:["আটাচমেন্ট ও স্যুথিং সিস্টেম সক্রিয় — নিরাপত্তা ও মিষ্টতা চাইছে।","ইন্দ্রিয়গত নস্টালজিয়া; খাবার/টেক্সচারের স্মৃতি দৃষ্টি টানে।","স্ব‑পালন সংকেত — আগে শক্তি ভরুন, তারপর এগোন।"]},
+      {t:HEAD.bn.phase, l:["ধীরে চলা, ঘরোয়া রুটিন, নরম সামাজিকতা।"]},
+      {t:HEAD.bn.forward, b:"ছোট রিচুয়াল বানান: চা, দোয়া/নামাজ, জার্নালিং, আগে ঘুম — আরাম সাহসকে জ্বালানি দেয়।"}
+    ]
+  };
+
+  function analyze(raw, lang){
+    const key=(raw||'').toLowerCase().trim();
+    if(!key) return null;
+    const lib = (lang==='bn') ? LIB_BN : LIB_EN;
+    if(lib[key]) return {known:true,key,blocks:lib[key]};
+    if(lang==='bn'){
+      return {known:false,key,blocks:[
+        {t:HEAD.bn.core, b:"এটি একটি ‘প্রজেকটিভ’ টেস্ট: প্রথম যে শব্দে চোখ আটকে যায়, তা আপনার বর্তমান ফোকাস/চাহিদা/ইমোশনকে প্রতিফলিত করে।"},
+        {t:HEAD.bn.psych, l:["মন ব্যক্তিগত প্রাসঙ্গিকতা‑যুক্ত প্যাটার্নকে আগে ধরে।","অবচেতন চাহিদা ও উদ্বেগ প্রথম দৃষ্টি আকর্ষণ করতে পারে।"]},
+        {t:HEAD.bn.forward, b:"প্রশ্ন করুন: আজ এই শব্দটি কেন আমার কাছে গুরুত্বপূর্ণ লাগল? এটি কোন চাহিদা বা মূল্যের ইশারা দেয়?"}
+      ]};
+    } else {
+      return {known:false,key,blocks:[
+        {t:HEAD.en.core, b:"This is a projective test: the first word you lock onto mirrors your current focus, needs, or emotional state."},
+        {t:HEAD.en.psych, l:["Your attention system prioritizes patterns with personal relevance.","Subconscious concerns and desires can bias what you notice first."]},
+        {t:HEAD.en.forward, b:"Ask: Why did this word matter to me today? What need or value does it point to?"}
+      ]};
+    }
+  }
+
+  // Elements
+  const w=document.getElementById('w'), b=document.getElementById('b'), chips=document.getElementById('chips');
+  const titleApp=document.getElementById('title-app'), subApp=document.getElementById('subtitle-app');
+  const titleWord=document.getElementById('title-word'), tag=document.getElementById('tag'), cards=document.getElementById('cards');
+  const note=document.getElementById('note'), shareBtn=document.getElementById('share');
+  const themeCalm=document.getElementById('theme-calm'), themeContrast=document.getElementById('theme-contrast');
+  const langEn=document.getElementById('lang-en'), langBn=document.getElementById('lang-bn');
+
+  const UI = {
+    en: {appTitle:"Psych Word Mirror",appSub:"Type a word and hit Decode (or press Enter). Or tap a chip.",decode:"Decode",share:"Share/Copy",recognized:"recognized",generic:"not in library — generic lens",note:"Note: Snapshot reflection tool, not a diagnosis."},
+    bn: {appTitle:"Psych Word Mirror",appSub:"একটি শব্দ লিখে ‘Decode’ চাপুন (বা Enter)। নিচের চিপ থেকেও বাছাই করতে পারেন।",decode:"ডিকোড",share:"শেয়ার/কপি",recognized:"স্বীকৃত",generic:"লাইব্রেরিতে নেই — সাধারণ ব্যাখ্যা",note:"নোট: এটি স্ব-মূল্যায়নের জন্য হালকা টুল; এটি কোনো চিকিৎসাগত নির্ণয় নয়।"}
+  };
+  let lang='bn';
+  let strings = UI[lang];
+
+  function applyLang(next){
+    lang = next;
+    strings = UI[next];
+    titleApp.textContent = strings.appTitle;
+    subApp.innerHTML = strings.appSub;
+    b.textContent = strings.decode;
+    shareBtn.textContent = strings.share;
+    tag.textContent = strings.recognized;
+    note.textContent = strings.note;
+    langEn.classList.toggle('active', next==='en'); langEn.setAttribute('aria-selected', next==='en');
+    langBn.classList.toggle('active', next==='bn'); langBn.setAttribute('aria-selected', next==='bn');
+    setWord(w.value || 'bun');
+  }
+
+  function setTheme(mode){
+    if(mode==='contrast'){ document.body.classList.add('contrast'); }
+    else { document.body.classList.remove('contrast'); }
+    themeCalm.classList.toggle('active', mode!=='contrast'); themeCalm.setAttribute('aria-selected', mode!=='contrast');
+    themeContrast.classList.toggle('active', mode==='contrast'); themeContrast.setAttribute('aria-selected', mode==='contrast');
+  }
+
+  async function shareCurrent(){
+    let textOut = titleWord.textContent + " — " + tag.textContent + "\\n\\n";
+    const items = cards.querySelectorAll('.card');
+    items.forEach(card=>{
+      const h = card.querySelector('h3').textContent;
+      textOut += h + ":\\n";
+      const p = card.querySelector('p'); if(p) textOut += "- " + p.textContent + "\\n";
+      const lis = card.querySelectorAll('li'); lis.forEach(li=>{ textOut += "- " + li.textContent + "\\n"; });
+      textOut += "\\n";
+    });
+    textOut += "— via Psych Word Mirror";
+    if(navigator.share){ try { await navigator.share({ text: textOut, title: "Psych Word Mirror" }); return; } catch(e){} }
+    try { await navigator.clipboard.writeText(textOut); shareBtn.textContent = strings.share + " ✓"; setTimeout(()=>{ shareBtn.textContent = strings.share; }, 1200); }
+    catch(e){ window.prompt("Copy result:", textOut); }
+  }
+
+  function render(data){
+    if(!data){ titleWord.textContent='(enter a word)'; tag.textContent=''; cards.innerHTML=''; return; }
+    const cap = data.key.charAt(0).toUpperCase() + data.key.slice(1);
+    titleWord.textContent = cap + (data.known ? "" : " (custom)");
+    tag.textContent = data.known ? strings.recognized : strings.generic;
+    cards.innerHTML='';
+    data.blocks.forEach(bk=>{
+      const c=document.createElement('div'); c.className='card';
+      const h=document.createElement('h3'); h.textContent=bk.t; c.appendChild(h);
+      if(bk.b){ const p=document.createElement('p'); p.textContent=bk.b; c.appendChild(p); }
+      if(bk.l){ const ul=document.createElement('ul'); bk.l.forEach(x=>{ const li=document.createElement('li'); li.textContent=x; ul.appendChild(li); }); c.appendChild(ul); }
+      cards.appendChild(c);
+    });
+  }
+
+  function setWord(v){ w.value=v; render(analyze(v, lang)); highlight(v); }
+  function highlight(v){
+    chips.querySelectorAll('.chip').forEach(ch=> ch.classList.toggle('active', ch.getAttribute('data-key')===(v||'').toLowerCase()));
+  }
+
+  // Events
+  b.addEventListener('click', ()=> setWord(w.value));
+  w.addEventListener('keydown', e=>{ if(e.key==='Enter') setWord(w.value); });
+  shareBtn.addEventListener('click', shareCurrent);
+  langEn.addEventListener('click', ()=> applyLang('en'));
+  langBn.addEventListener('click', ()=> applyLang('bn'));
+  themeCalm.addEventListener('click', ()=> setTheme('calm'));
+  themeContrast.addEventListener('click', ()=> setTheme('contrast'));
+
+  // Chips
+  EXAMPLES.forEach(x=>{
+    const el=document.createElement('button');
+    el.className='chip'; el.textContent=x[0].toUpperCase()+x.slice(1);
+    el.setAttribute('data-key',x);
+    el.addEventListener('click', ()=> setWord(x));
+    chips.appendChild(el);
+  });
+
+  // Init (Bangla + BUN)
+  applyLang('bn');
+  setTheme('calm');
+  setWord('bun');
+})();
+</script>
+</body>
+</html>
